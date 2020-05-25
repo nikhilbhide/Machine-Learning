@@ -8,6 +8,7 @@ Created on Sun May 24 16:16:09 2020
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
+import matplotlib.pyplot as plt
 
 # Model / data parameters
 num_classes = 10
@@ -53,11 +54,11 @@ model = keras.Sequential(
 model.summary()
 
 batch_size = 128
-epochs = 150
+epochs = 15
 
 model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33)
+history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33)
 
 
 score = model.evaluate(x_test, y_test, verbose=1)
@@ -67,5 +68,25 @@ print("Test accuracy:", score[1])
 
 # print summary
 print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(score)*100, std(score)*100, len(score)))
-# box and whisker plots of results
-pyplot.boxplot(score)
+
+
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+

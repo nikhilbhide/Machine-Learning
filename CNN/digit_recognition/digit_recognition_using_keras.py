@@ -13,7 +13,7 @@ from numpy import mean
 from numpy import std
 
 # plot diagnostic learning curves
-def summarize_diagnostics(histories):
+def summarize_diagnostics(history):
     # summarize history for accuracy
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
@@ -32,7 +32,8 @@ def summarize_diagnostics(histories):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
-def create_model():
+def create_model(input_shape, num_shape):
+    
     model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
@@ -48,11 +49,7 @@ def create_model():
 
     return model
 
-def evaluate_model(model, x_train, y_train,x_test,y_test):
-    # Model / data parameters
-    num_classes = 10
-    input_shape = (28, 28, 1)
-    
+def evaluate_model(model, x_train, y_train,x_test,y_test,num_classes,batch_size,epochs):
     # convert class vectors to binary class matrices
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
@@ -76,7 +73,7 @@ def evaluate_model(model, x_train, y_train,x_test,y_test):
 # the data, split between train and test sets
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-# Scale images to the [0, 1] range
+# scale images to the [0, 1] range
 x_train = x_train.astype("float32") / 255
 x_test = x_test.astype("float32") / 255
 
@@ -85,17 +82,22 @@ print(x_train.shape[0], "train samples")
 print(x_test.shape[0], "test samples")
 
 
-# Make sure images have shape (28, 28, 1)
 x_train = np.expand_dims(x_train, axis=3)
 x_test = np.expand_dims(x_test, axis=3)
 print("x_train shape:", x_train.shape)
 print(x_train.shape[0], "train samples")
 print(x_test.shape[0], "test samples")
+# input shape
+input_shape = (28, 28, 1)
+# model / data parameters
+num_classes = 10
+# size of the batch to be used for gradient update
+batch_size = 128
+# num of epochs
+epochs = 15
 
-model = create_model()
-evaluate_model(model,x_train,y_train,x_test,y_test)
+model = create_model(input_shape,num_classes)
+evaluate_model(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs)
 model.summary()
 
-batch_size = 128
-epochs = 15
 

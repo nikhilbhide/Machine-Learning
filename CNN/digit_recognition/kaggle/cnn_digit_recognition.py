@@ -42,6 +42,14 @@ def prepare_dataset():
     
     return x_train,y_train,x_validation,y_validation
     
+def prepare_test_dataset():
+    # the data, split between train and test sets
+    df = pd.read_csv("test.csv")
+    print(df.shape)
+    test = df.to_numpy().reshape(28000,28,28,1)
+    
+    return test
+
     
 # plot diagnostic learning curves
 def summarize_diagnostics(history):
@@ -111,7 +119,7 @@ def get_hyperparameters():
     # size of the batch to be used for gradient update
     batch_size = 128
     # num of epochs
-    epochs = 15
+    epochs = 150
     
     return input_shape, num_classes, batch_size, epochs
 
@@ -124,12 +132,21 @@ def predict_by_index(model, indicesToPredict, x_test):
 
     
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
-x_train,y_train,x_test,y_test = prepare_dataset()
+x_train,y_train,x_validation,y_validation = prepare_dataset()
+
 model = create_model(input_shape,num_classes)
-evaluate_model(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs)
+evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
 model.summary()
 indices = [100,200,1040,5060,4502]
-predict_by_index(model,indices,x_test)
+predict_by_index(model,indices,x_validation)
+
+test = prepare_test_dataset()
+
+predictions = model.predict_classes(test, verbose=1)
+pd.DataFrame({"ImageId":list(range(1,len(predictions)+1)),
+              "Label":predictions}).to_csv("submission.csv",
+                                           index=False,
+                                           header=True)
     
 # import numpy as np
 # train = np.genfromtxt('test.csv',delimiter=';',names=True,skip_header=1)
@@ -139,5 +156,4 @@ predict_by_index(model,indices,x_test)
 # y_train, x_train = np.split(train,[1])
 # print(np.unique(train))
 # x_test = np.genfromtxt('test.csv',delimiter=',',,skip_header=1)
-
 

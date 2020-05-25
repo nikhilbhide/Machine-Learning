@@ -21,7 +21,6 @@ from numpy import std
 def prepare_dataset():
     # the data, split between train and test sets
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-    
     # scale images to the [0, 1] range
     x_train = x_train.astype("float32") / 255
     x_test = x_test.astype("float32") / 255
@@ -58,8 +57,11 @@ def summarize_diagnostics(history):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
+# =============================================================================
+# create model for recognizing digit 
+# select input shape as nh = 28 and nw = 28 with total pixes 784   
+# =============================================================================
 def create_model(input_shape, num_shape):
-    
     model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
@@ -107,10 +109,18 @@ def get_hyperparameters():
     
     return input_shape, num_classes, batch_size, epochs
 
+def predict_by_index(model, indicesToPredict, x_test):
+    for index in indicesToPredict:
+        plt.imshow(x_test[index].reshape(28, 28),cmap='Greys')
+        plt.show()
+        pred = model.predict(x_test[index].reshape(1, 28, 28, 1))
+        print(pred.argmax())
+
+    
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
 x_train,y_train,x_test,y_test = prepare_dataset()
 model = create_model(input_shape,num_classes)
 evaluate_model(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs)
 model.summary()
-
-
+indices = [100,200,1040,5060,4502]
+predict_by_index(model,indices,x_test)

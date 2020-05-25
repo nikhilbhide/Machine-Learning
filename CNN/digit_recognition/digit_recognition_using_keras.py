@@ -9,6 +9,8 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
+from numpy import mean
+from numpy import std
 
 # plot diagnostic learning curves
 def summarize_diagnostics(histories):
@@ -30,11 +32,46 @@ def summarize_diagnostics(histories):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
+def create_model():
+    model = keras.Sequential(
+    [
+        keras.Input(shape=input_shape),
+        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Flatten(),
+        layers.Dropout(0.5),
+        layers.Dense(num_classes, activation="softmax"),
+    ]
+    )
+
+    return model
+
+def evaluate_model(model, x_train, y_train,x_test,y_test):
+    # Model / data parameters
+    num_classes = 10
+    input_shape = (28, 28, 1)
+    
+    # convert class vectors to binary class matrices
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_test = keras.utils.to_categorical(y_test, num_classes)
+
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33)
+    score = model.evaluate(x_test, y_test, verbose=1)
+    print("Test loss:", score[0])
+    print("Test accuracy:", score[1])
+
+    # print summary
+    print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(score)*100, std(score)*100, len(score)))
+
+    # list all data in history
+    print(history.history.keys())
+
+    summarize_diagnostics(history)
 
 
-# Model / data parameters
-num_classes = 10
-input_shape = (28, 28, 1)
 
 # the data, split between train and test sets
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
@@ -55,45 +92,10 @@ print("x_train shape:", x_train.shape)
 print(x_train.shape[0], "train samples")
 print(x_test.shape[0], "test samples")
 
-
-# convert class vectors to binary class matrices
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
-
-model = keras.Sequential(
-    [
-        keras.Input(shape=input_shape),
-        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
-        layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Flatten(),
-        layers.Dropout(0.5),
-        layers.Dense(num_classes, activation="softmax"),
-    ]
-)
-
+model = create_model()
+evaluate_model(model,x_train,y_train,x_test,y_test)
 model.summary()
 
 batch_size = 128
 epochs = 15
 
-model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
-history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33)
-
-
-score = model.evaluate(x_test, y_test, verbose=1)
-
-print("Test loss:", score[0])
-print("Test accuracy:", score[1])
-
-# print summary
-print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(score)*100, std(score)*100, len(score)))
-
-
-
-# list all data in history
-print(history.history.keys())
-
-summarize_diagnostics(history)

@@ -12,6 +12,32 @@ import matplotlib.pyplot as plt
 from numpy import mean
 from numpy import std
 
+# =============================================================================
+# prepare dataset for model evaluation
+# download training and test datasets along with labels
+# perform normalization of the images
+# 
+# =============================================================================
+def prepare_dataset():
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+    
+    # scale images to the [0, 1] range
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
+    
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+    
+    x_train = np.expand_dims(x_train, axis=3)
+    x_test = np.expand_dims(x_test, axis=3)
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+    return x_train, y_train, x_test, y_test
+
+
 # plot diagnostic learning curves
 def summarize_diagnostics(history):
     # summarize history for accuracy
@@ -69,33 +95,20 @@ def evaluate_model(model, x_train, y_train,x_test,y_test,num_classes,batch_size,
     summarize_diagnostics(history)
 
 
+def get_hyperparameters():
+    # input shape
+    input_shape = (28, 28, 1)
+    # model / data parameters
+    num_classes = 10
+    # size of the batch to be used for gradient update
+    batch_size = 128
+    # num of epochs
+    epochs = 15
+    
+    return input_shape, num_classes, batch_size, epochs
 
-# the data, split between train and test sets
-(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-
-# scale images to the [0, 1] range
-x_train = x_train.astype("float32") / 255
-x_test = x_test.astype("float32") / 255
-
-print("x_train shape:", x_train.shape)
-print(x_train.shape[0], "train samples")
-print(x_test.shape[0], "test samples")
-
-
-x_train = np.expand_dims(x_train, axis=3)
-x_test = np.expand_dims(x_test, axis=3)
-print("x_train shape:", x_train.shape)
-print(x_train.shape[0], "train samples")
-print(x_test.shape[0], "test samples")
-# input shape
-input_shape = (28, 28, 1)
-# model / data parameters
-num_classes = 10
-# size of the batch to be used for gradient update
-batch_size = 128
-# num of epochs
-epochs = 15
-
+input_shape, num_classes, batch_size, epochs = get_hyperparameters()
+x_train,y_train,x_test,y_test = prepare_dataset()
 model = create_model(input_shape,num_classes)
 evaluate_model(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs)
 model.summary()

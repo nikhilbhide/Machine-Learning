@@ -85,6 +85,9 @@ def create_model(input_shape, num_shape, activation_function):
         layers.Conv2D(64, kernel_size=(3, 3), activation=activation_function),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
+        layers.Dense(400,activation=activation_function),
+        layers.Dropout(0.5),
+        layers.Dense(120,activation=activation_function),
         layers.Dropout(0.5),
         layers.Dense(num_classes, activation="softmax"),
     ]
@@ -106,9 +109,9 @@ def create_lenet5_model(input_shape, num_shape, activation_function):
         layers.Conv2D(64, kernel_size=(5, 5), activation=activation_function),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
-        layers.Dropout(0.5),
         layers.Dense(120,activation=activation_function),
         layers.Dense(84,activation=activation_function),
+        layers.Dropout(0.5),
         layers.Dense(num_classes, activation="softmax"),
     ]
     )
@@ -122,7 +125,7 @@ def evaluate_model(model, x_train, y_train,x_test,y_test,num_classes,batch_size,
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-    history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33)
+    history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.33,workers=-1,use_multiprocessing=True)
     score = model.evaluate(x_test, y_test, verbose=1)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
@@ -144,7 +147,7 @@ def get_hyperparameters():
     # size of the batch to be used for gradient update
     batch_size = 128
     # num of epochs
-    epochs = 15
+    epochs = 50
     
     return input_shape, num_classes, batch_size, epochs
 
@@ -155,12 +158,52 @@ def predict_by_index(model, indicesToPredict, x_test):
         pred = model.predict(x_test[index].reshape(1, 28, 28, 1))
         print(pred.argmax())
 
+def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs):
+    from keras.preprocessing.image import ImageDataGenerator
+
+    datagen = ImageDataGenerator(
+    featurewise_center=True,
+    featurewise_std_normalization=True,
+    rotation_range=10,
+    fill_mode='nearest',
+    validation_split = 0.2
+    )
+
+    datagen.fit(x_train)
+
+    train_generator = datagen.flow(x_train, y_train, batch_size=60, subset='training')
+
+    validation_generator = datagen.flow(x_train, y_train, batch_size=60, subset='validation')
+
+
+    # fits the model on batches with real-time data augmentation:
+    history = model.fit_generator(generator=train_generator,
+                    validation_data=validation_generator,
+                    use_multiprocessing=True,
+                    steps_per_epoch = len(train_generator) / 60,
+                    validation_steps = len(validation_generator) / 60,
+                    epochs = 300,
+                    workers=-1)
+    
+    score = model.evaluate(x_test, y_test, verbose=1)
+    print("Test loss:", score[0])
+    print("Test accuracy:", score[1])
+
+    # print summary
+    print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(score)*100, std(score)*100, len(score)))
+
+    # list all data in history
+    print(history.history.keys())
+
+    summarize_diagnostics(history)
+
     
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
 x_train,y_train,x_validation,y_validation = prepare_dataset()
 
-model = create_lenet5_model(input_shape,num_classes,"relu")
+model = create_model(input_shape,num_classes,"relu")
 evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
+evaluate_model_with_data_augmentation(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
 model.summary()
 indices = [100,200,1040,5060,4502]
 predict_by_index(model,indices,x_validation)
@@ -173,6 +216,7 @@ pd.DataFrame({"ImageId":list(range(1,len(predictions)+1)),
                                            index=False,
                                            header=True)
     
+                                           
 # import numpy as np
 # train = np.genfromtxt('test.csv',delimiter=';',names=True,skip_header=1)
 # y_train = train['label'] 

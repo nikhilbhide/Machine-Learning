@@ -74,14 +74,15 @@ def summarize_diagnostics(history):
 # =============================================================================
 # create model for recognizing digit 
 # select input shape as nh = 28 and nw = 28 with total pixes 784   
+# This is two layer network with one full connection layer followed by output layer
 # =============================================================================
-def create_model(input_shape, num_shape):
+def create_model(input_shape, num_shape, activation_function):
     model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
-        layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+        layers.Conv2D(32, kernel_size=(3, 3), activation=activation_function),
         layers.MaxPooling2D(pool_size=(2, 2)),
-        layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+        layers.Conv2D(64, kernel_size=(3, 3), activation=activation_function),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
         layers.Dropout(0.5),
@@ -90,6 +91,30 @@ def create_model(input_shape, num_shape):
     )
 
     return model
+
+# =============================================================================
+# create model for recognizing digit 
+# select input shape as nh = 28 and nw = 28 with total pixes 784   
+# This is two layer network with one full connection layer followed by output layer
+# =============================================================================
+def create_lenet5_model(input_shape, num_shape, activation_function):
+    model = keras.Sequential(
+    [
+        keras.Input(shape=input_shape),
+        layers.Conv2D(6, kernel_size=(5, 5), activation=activation_function),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Conv2D(64, kernel_size=(5, 5), activation=activation_function),
+        layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Flatten(),
+        layers.Dropout(0.5),
+        layers.Dense(120,activation=activation_function),
+        layers.Dense(84,activation=activation_function),
+        layers.Dense(num_classes, activation="softmax"),
+    ]
+    )
+
+    return model
+
 
 def evaluate_model(model, x_train, y_train,x_test,y_test,num_classes,batch_size,epochs):
     # convert class vectors to binary class matrices
@@ -119,7 +144,7 @@ def get_hyperparameters():
     # size of the batch to be used for gradient update
     batch_size = 128
     # num of epochs
-    epochs = 150
+    epochs = 15
     
     return input_shape, num_classes, batch_size, epochs
 
@@ -134,7 +159,7 @@ def predict_by_index(model, indicesToPredict, x_test):
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
 x_train,y_train,x_validation,y_validation = prepare_dataset()
 
-model = create_model(input_shape,num_classes)
+model = create_lenet5_model(input_shape,num_classes,"relu")
 evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
 model.summary()
 indices = [100,200,1040,5060,4502]

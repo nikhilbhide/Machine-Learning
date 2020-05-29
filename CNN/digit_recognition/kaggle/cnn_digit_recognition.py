@@ -221,7 +221,17 @@ def predict_test_dataset():
                                            index=False,
                                            header=True)
 
-#get hyperparameters
+def plot_model(model):
+   keras.utils.plot_model(
+    model,
+    to_file="model.png",
+    show_shapes=False,
+    show_layer_names=True,
+    rankdir="TB",
+    expand_nested=False,
+    dpi=96,
+)
+              #get hyperparameters
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
 #prepare datasets
 x_train,y_train,x_validation,y_validation = prepare_dataset()
@@ -233,6 +243,8 @@ model = create_model(input_shape,num_classes,'relu')
 evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
 #summarize model
 model.summary()
+#plot model
+plot_model(model)
 #prediction
 indices = [100,200,1040,5060,4502]
 predict_by_index(model,indices,x_validation)

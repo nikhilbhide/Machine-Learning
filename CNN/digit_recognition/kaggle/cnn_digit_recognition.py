@@ -100,7 +100,7 @@ def create_model(input_shape, num_shape, activation_function):
 # select input shape as nh = 28 and nw = 28 with total pixes 784   
 # This is two layer network with one full connection layer followed by output layer
 # =============================================================================
-def create_lenet5_model(input_shape, num_shape, activation_function):
+def create_lenet5_model_with_dropout(input_shape, num_shape, activation_function):
     model = keras.Sequential(
     [
         keras.Input(shape=input_shape),

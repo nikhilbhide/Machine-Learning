@@ -203,26 +203,41 @@ def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,nu
 
     summarize_diagnostics(history)
 
-    
-input_shape, num_classes, batch_size, epochs = get_hyperparameters()
-x_train,y_train,x_validation,y_validation = prepare_dataset()
+def plot_digits(X, Y):
+    for i in range(25):
+        plt.subplot(5, 5, i+1)
+        plt.tight_layout()
+        plt.imshow(X[i].reshape(28, 28), cmap='gray')
+        plt.title('Digit:{}'.format(Y[i]))
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()
 
-
-model = create_lenet5_model(input_shape,num_classes,'relu')
-evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
-#evaluate_model_with_data_augmentation(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
-model.summary()
-indices = [100,200,1040,5060,4502]
-predict_by_index(model,indices,x_validation)
-
-test = prepare_test_dataset()
-
-predictions = model.predict_classes(test, verbose=1)
-pd.DataFrame({"ImageId":list(range(1,len(predictions)+1)),
+def predict_test_dataset():
+    test = prepare_test_dataset()
+    predictions = model.predict_classes(test, verbose=1)
+    pd.DataFrame({"ImageId":list(range(1,len(predictions)+1)),
               "Label":predictions}).to_csv("submission.csv",
                                            index=False,
                                            header=True)
-    
+
+#get hyperparameters
+input_shape, num_classes, batch_size, epochs = get_hyperparameters()
+#prepare datasets
+x_train,y_train,x_validation,y_validation = prepare_dataset()
+#plot digits
+plot_digits(x_train,y_train)                                           
+#create model
+model = create_model(input_shape,num_classes,'relu')
+#evaluate model
+evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
+#summarize model
+model.summary()
+#prediction
+indices = [100,200,1040,5060,4502]
+predict_by_index(model,indices,x_validation)
+
+
                                            
 # import numpy as np
 # train = np.genfromtxt('test.csv',delimiter=';',names=True,skip_header=1)

@@ -33,10 +33,10 @@ def prepare_dataset():
 
     print(type(y_train_df))
     
-    x_train = x_train_df.to_numpy().reshape(33600,28,28,1)
+    x_train = x_train_df.to_numpy().reshape(x_train_df.shape[0],28,28,1)
     y_train = y_train_df.to_numpy()
     print(y_train.shape)
-    x_validation = x_validation.to_numpy().reshape(8400,28,28,1)
+    x_validation = x_validation.to_numpy().reshape(x_validation.shape[0],28,28,1)
     y_validation = y_validation.to_numpy()
     
     
@@ -84,11 +84,11 @@ def create_model(input_shape, num_shape, activation_function):
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Conv2D(64, kernel_size=(3, 3), activation=activation_function),
         layers.MaxPooling2D(pool_size=(2, 2)),
+        layers.Conv2D(64, kernel_size=(3, 3), activation=activation_function),
+        layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
-        layers.Dense(400,activation=activation_function),
-        layers.Dropout(0.5),
-        layers.Dense(120,activation=activation_function),
-        layers.Dropout(0.5),
+        layers.Dense(128,activation=activation_function),
+        layers.Dense(500,activation=activation_function),
         layers.Dense(num_classes, activation="softmax"),
     ]
     )
@@ -104,13 +104,16 @@ def create_lenet5_model(input_shape, num_shape, activation_function):
     model = keras.Sequential(
     [
         keras.Input(shape=input_shape),
-        layers.Conv2D(6, kernel_size=(5, 5), activation=activation_function),
+        layers.Conv2D(12, kernel_size=(5, 5), activation=activation_function),
+        layers.Dropout(0.5),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Conv2D(64, kernel_size=(5, 5), activation=activation_function),
+        layers.Dropout(0.5),
         layers.MaxPooling2D(pool_size=(2, 2)),
         layers.Flatten(),
-        layers.Dense(120,activation=activation_function),
-        layers.Dense(84,activation=activation_function),
+        layers.Dense(240,activation=activation_function),
+        layers.Dropout(0.5),
+        layers.Dense(168,activation=activation_function),
         layers.Dropout(0.5),
         layers.Dense(num_classes, activation="softmax"),
     ]
@@ -161,6 +164,7 @@ def predict_by_index(model, indicesToPredict, x_test):
 def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,num_classes,batch_size,epochs):
     from keras.preprocessing.image import ImageDataGenerator
 
+
     datagen = ImageDataGenerator(
     featurewise_center=True,
     featurewise_std_normalization=True,
@@ -175,7 +179,8 @@ def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,nu
 
     validation_generator = datagen.flow(x_train, y_train, batch_size=60, subset='validation')
 
-
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    
     # fits the model on batches with real-time data augmentation:
     history = model.fit_generator(generator=train_generator,
                     validation_data=validation_generator,
@@ -183,6 +188,7 @@ def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,nu
                     steps_per_epoch = len(train_generator) / 60,
                     validation_steps = len(validation_generator) / 60,
                     epochs = 300,
+                    verbose = 1,
                     workers=-1)
     
     score = model.evaluate(x_test, y_test, verbose=1)
@@ -201,9 +207,10 @@ def evaluate_model_with_data_augmentation(model,x_train,y_train,x_test,y_test,nu
 input_shape, num_classes, batch_size, epochs = get_hyperparameters()
 x_train,y_train,x_validation,y_validation = prepare_dataset()
 
-model = create_model(input_shape,num_classes,"relu")
+
+model = create_lenet5_model(input_shape,num_classes,'relu')
 evaluate_model(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
-evaluate_model_with_data_augmentation(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
+#evaluate_model_with_data_augmentation(model,x_train,y_train,x_validation,y_validation,num_classes,batch_size,epochs)
 model.summary()
 indices = [100,200,1040,5060,4502]
 predict_by_index(model,indices,x_validation)

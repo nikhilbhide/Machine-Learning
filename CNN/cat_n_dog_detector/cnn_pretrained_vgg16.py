@@ -1,21 +1,25 @@
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
-from keras.layers import Dropout, Flatten, Dense
+from keras.layers import Dropout, Flatten, Dense, Input
 from keras import applications
 import matplotlib.pyplot as plt
 from keras.models import load_model
+from keras.models import model_from_json
+import json
+from keras.preprocessing import image
+from matplotlib.pyplot import imshow
 
 
 # dimensions of our images.
-img_width, img_height = 512, 512
+img_width, img_height = 150, 150
 
 top_model_weights_path = 'bottleneck_fc_model.h5'
 train_data_dir = 'dataset/train'
 validation_data_dir = 'dataset/validation'
 nb_train_samples = 2000
 nb_validation_samples = 800
-epochs = 100
+epochs = 50
 batch_size = 16
 
 
@@ -84,6 +88,8 @@ def train_top_model():
 
     model.compile(optimizer='rmsprop',
                   loss='binary_crossentropy', metrics=['accuracy'])
+    
+
 
     print(train_data)
     print(train_labels)
@@ -100,20 +106,28 @@ def train_top_model():
     summarize_diagnostics(history)
     model.save_weights(top_model_weights_path)
 
+    
+    
+    test_image = image.load_img('dataset/test1/1.jpg',target_size=(512,512))
+    imshow(test_image)
+    test_image=image.img_to_array(test_image)
+    test_image = np.expand_dims(test_image,axis=0)
+    pred = model.predict(test_image)
+    print(pred)
+    
+    label = model.predict_classes(test_image)
+    print(label)
+    
+    pred_prob= model.predict_classes(test_image)
+    print(pred_prob)
 
+    
+    model_json = model.to_json()
+    with open("model_in_json.json", "w") as json_file:
+        json.dump(model_json, json_file)
 
 save_bottlebeck_features()
 train_top_model()
 
-new_model = load_model('bottleneck_fc_model.h5')
-import numpy as np
-from keras.preprocessing import image
-test_image = image.load_img('dataset/test/1.jpg',target_size=(150,150))
-test_image=image.img_to_array(test_image)
-test_image = np.expand_dims(test_image,axis=0)
-result = new_model.predict(test_image)
-print(result)
-label = new_model.predict_classes(test_image)
-print(label)
-prob = new_model.predict_proba(test_image)
-print(prob)
+with open('model_in_json.json','r') as f:
+    model_json = json.load(f)

@@ -44,6 +44,7 @@ def create_model_decorated_with_vgg16():
     # Adding custom layers
     x = base_model.output
     x = Flatten()(x)
+    x = Dropout(0.5)(x)
     x = Dense(256, activation='relu')(x)
     x = Dropout(0.5)(x)
     output = Dense(1, activation='sigmoid')(x)

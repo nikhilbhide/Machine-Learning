@@ -28,7 +28,7 @@ validation_data_dir = 'dataset/validation'
 nb_train_samples = 2000
 nb_validation_samples = 800
 epochs = 25
-batch_size = 16
+batch_size = 128
 
 #create model with decorated vgg 16 without final dense layer
 #attach dense layer with 256 nodes and output layer with one node
@@ -167,7 +167,7 @@ def create_value_to_label_map(indices):
         value_to_class[label_map[key]] = key
     
 def get_label(label_value):
-    label = label_map[label_value]
+    label = value_to_class[label_value]
     print(label)
     return label
     

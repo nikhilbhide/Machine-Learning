@@ -10,10 +10,9 @@ import json
 from keras.preprocessing import image
 from matplotlib.pyplot import imshow
 
-
-# dimensions of our images.
+#define global variables
+value_to_class = {}
 img_width, img_height = 150, 150
-
 top_model_weights_path = 'bottleneck_fc_model.h5'
 train_data_dir = 'dataset/train'
 validation_data_dir = 'dataset/validation'
@@ -108,7 +107,7 @@ def train_top_model():
 
     
     
-    test_image = image.load_img('dataset/test1/1.jpg',target_size=(512,512))
+    test_image = image.load_img('dataset/test1/1.jpg',target_size=(150,150))
     imshow(test_image)
     test_image=image.img_to_array(test_image)
     test_image = np.expand_dims(test_image,axis=0)
@@ -126,8 +125,56 @@ def train_top_model():
     with open("model_in_json.json", "w") as json_file:
         json.dump(model_json, json_file)
 
+    return model
+
+def predict_images(model):
+    test_image = image.load_img('dataset/test1/49.jpg',target_size=(150,150))
+    imshow(test_image)
+    test_image=image.img_to_array(test_image)
+    test_image = np.expand_dims(test_image,axis=0)
+    pred = model.predict(test_image)
+    print(pred)
+    classes = model.predict_classes(test_image)
+    get_label(classes)
+    print(classes)
+    pred_prob= model.predict_proba(test_image)
+    print(pred_prob)
+    
+    test_image = image.load_img('dataset/test1/45.jpg',target_size=(150,150))
+    imshow(test_image)
+    test_image=image.img_to_array(test_image)
+    test_image = np.expand_dims(test_image,axis=0)
+    pred = model.predict(test_image)
+    print(pred)
+    classes = model.predict_classes(test_image)
+    print(classes)
+    pred_prob= model.predict_proba(test_image)
+    print(pred_prob)
+    
+    test_image = image.load_img('dataset/test1/45.jpg',target_size=(150,150))
+    imshow(test_image)
+    test_image=image.img_to_array(test_image)
+    test_image = np.expand_dims(test_image,axis=0)
+    pred = model.predict(test_image)
+    print(pred)
+    classes = model.predict_classes(test_image)
+    print(classes[0][0])
+    pred_prob= model.predict_proba(test_image)
+    print(pred_prob)
+
+def create_value_to_label_map(indices):
+    label_map = indices
+    for key in label_map:
+        value_to_class[label_map[key]] = key
+    
+def get_label(label_value):
+    label = value_to_class[label_value]
+    print(label)
+    return label
+
 save_bottlebeck_features()
-train_top_model()
+model = train_top_model()
+predict_images(model)
 
 with open('model_in_json.json','r') as f:
     model_json = json.load(f)

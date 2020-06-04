@@ -17,6 +17,8 @@ from matplotlib.pyplot import imshow
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
 
 #create global variables
 value_to_class = {}
@@ -135,12 +137,12 @@ def predict_images(model):
     pred = model.predict(test_image)
     print(pred)
     classes = model.predict_classes(test_image)
-    get_label(classes)
     print(classes)
     pred_prob= model.predict_proba(test_image)
     print(pred_prob)
+    get_label(classes[0][0])
     
-    test_image = image.load_img('dataset/test1/45.jpg',target_size=(150,150))
+    test_image = image.load_img('dataset/test1/62.jpg',target_size=(150,150))
     imshow(test_image)
     test_image=image.img_to_array(test_image)
     test_image = np.expand_dims(test_image,axis=0)
@@ -150,7 +152,20 @@ def predict_images(model):
     print(classes)
     pred_prob= model.predict_proba(test_image)
     print(pred_prob)
-    
+    get_label(classes[0][0])
+
+    test_image = image.load_img('dataset/test1/5.jpg',target_size=(150,150))
+    imshow(test_image)
+    test_image=image.img_to_array(test_image)
+    test_image = np.expand_dims(test_image,axis=0)
+    pred = model.predict(test_image)
+    print(pred)
+    classes = model.predict_classes(test_image)
+    print(classes)
+    pred_prob= model.predict_proba(test_image)
+    print(pred_prob)
+    get_label(classes[0][0])
+
     test_image = image.load_img('dataset/test1/45.jpg',target_size=(150,150))
     imshow(test_image)
     test_image=image.img_to_array(test_image)
@@ -161,6 +176,8 @@ def predict_images(model):
     print(classes[0][0])
     pred_prob= model.predict_proba(test_image)
     print(pred_prob)
+    get_label(classes[0][0])
+
 
 def create_value_to_label_map(indices):
     label_map = indices
@@ -181,4 +198,32 @@ summarize_diagnostics(history)
 create_value_to_label_map(training_generator.class_indices)
 predict_images(model)
     
+test_image = image.load_img('dataset/test1/17.jpg',target_size=(150,150))
+imshow(test_image)
+test_image=image.img_to_array(test_image)
+test_image = np.expand_dims(test_image,axis=0)
+pred = model.predict(test_image)
+print(pred)
+classes = model.predict_classes(test_image)
+print(classes)
+pred_prob= model.predict_proba(test_image)
+print(pred_prob)
+get_label(classes[0][0])
 
+test_datagen = ImageDataGenerator(rescale=1. / 255)
+test_data_dir = 'dataset/test'
+test_generator = test_datagen.flow_from_directory(
+        test_data_dir,
+        target_size=(img_width, img_height),
+        batch_size=batch_size,
+        class_mode=None,  # only data, no labels
+        shuffle=False)  # keep data in same order as labels
+
+predictions = model.predict_generator(test_generator)
+y_true = np.array([0] * 1000 )
+y_pred = predictions > 0.5
+predicted_class_indices=np.argmax(predictions,axis=1)
+
+
+confusion_matrix(y_true, y_pred)
+print(predictions)

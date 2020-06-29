@@ -23,8 +23,8 @@ image_size = 224
 value_to_class = {}
 test_dir = 'dataset/test/'
 test_images_dir = 'dataset/test/'
-nb_train_samples = 50
-nb_validation_samples = 50
+nb_train_samples = 80
+nb_validation_samples = 40
 
 #create model with decorated resnetwithout final dense layer
 #attach dense layer with 128 nodes and output layer with two nodes
@@ -41,7 +41,7 @@ def create_model_decorated_with_resnet():
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(256, activation='relu')(x) 
     x = layers.Dropout(0.5)(x)
-    outputLayer = layers.Dense(2, activation='softmax')(x)
+    outputLayer = layers.Dense(5, activation='softmax')(x)
     model = Model(conv_base.input, outputLayer)
 
     #use adam as an optimizer
@@ -64,7 +64,7 @@ def generate_data():
     train_generator = train_datagen.flow_from_directory(
         train_data_dir,
         batch_size=32,
-        class_mode='binary',
+        class_mode='categorical',
         target_size=(image_size,image_size))
 
     validation_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
@@ -72,7 +72,7 @@ def generate_data():
     validation_generator = validation_datagen.flow_from_directory(
         validation_data_dir,
         shuffle=False,
-        class_mode='binary',
+        class_mode='categorical',
         target_size=(224,224))
 
     return (train_generator, validation_generator)
@@ -91,9 +91,9 @@ def evaluate_model(model, train_generator, validation_generator):
                              )
 
 
-    model.save('models/keras/resnet_model_more_batches.h5')
-    model.save_weights('models/keras/resnet_weights_more_batches.h5')
-    with open('models/keras/resnet_architecture_more_batches.json', 'w') as f:
+    model.save('models/keras/resnet_model_v1.h5')
+    model.save_weights('models/keras/resnet_model_v1.h5')
+    with open('models/keras/resnet_model_architecture_v1.json', 'w') as f:
         f.write(model.to_json())
         
     return history    
@@ -133,9 +133,7 @@ def evaluate_model_on_test_data(model, test_directory):
     test_generator.reset()
     pred = model.predict_generator(test_generator, steps = len(test_generator), verbose = 1)
     predicted_class_indices = np.argmax(pred, axis = 1)
-
     cm = confusion_matrix(test_generator.classes, predicted_class_indices)
-
     print(cm) 
     print("Accuracy Score :",accuracy_score(test_generator.classes, predicted_class_indices))
     print("Report : ")
@@ -199,14 +197,17 @@ def visualize_filters(model):
 
 def load_model():
     # load json and create model
-    json_file = open('models/keras/resnet_architecture_more_batches.json', 'r')
+    json_file = open('models/keras/resnet_model_architecture_v1.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
-    loaded_model.load_weights("models/keras/resnet_weights_more_batches.h5")
+    loaded_model.load_weights("models/keras/resnet_model_v1.h5")
     print("Loaded model from disk")
     return loaded_model
+
+def plot_model(model,filePath):
+    plot_model(model, to_file=filePath, show_shapes=True, show_layer_names=True)
     
 training_generator, validation_generator = generate_data()
 label_map = (validation_generator.class_indices)
@@ -215,7 +216,8 @@ history = evaluate_model(model, training_generator, validation_generator)
 summarize_diagnostics(history)
 create_value_to_label_map(training_generator.class_indices)
 evaluate_model_on_test_data(model,test_dir)
-perform_validation(model)
-visualize_filters(model)
+#perform_validation(model)
+#visualize_filters(model)
 loaded_model = load_model()
 evaluate_model_on_test_data(loaded_model,test_dir)
+plot_model(model,"models/keras/resnet.jpg")

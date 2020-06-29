@@ -10,7 +10,9 @@ def jpeg_res(filename):
    img = cv2.imread(filename)
    if(type(img)!=type(None)):
        height, width, channels = img.shape
-       if height<224 and width< 224:
+       print(height,width,channels)
+       if height<224 or width< 224:
+           print("height and width are not matching. removing file "+filename)
            os.remove(filename)
    else:
        os.remove(filename)
@@ -31,4 +33,5 @@ for file in files_in_basepath:
         filename, file_extension = os.path.splitext(file.name)
         jpeg_res(file.name)
     else:
+        print("file format problem so removing file "+filename)
         os.remove(file)

@@ -15,6 +15,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score 
 from sklearn.metrics import classification_report 
 from keras.models import model_from_json
+from keras.models import load_model
+from keras.preprocessing import image
 
 
 train_data_dir = 'dataset/train'
@@ -208,6 +210,18 @@ def load_model():
 
 def plot_model(model,filePath):
     plot_model(model, to_file=filePath, show_shapes=True, show_layer_names=True)
+
+def predict(model, filepath):
+    img = image.load_img(filepath, target_size=(image_size, image_size))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+
+    images = np.vstack([x])
+    y_pred = model.predict(images, batch_size=10)
+    print(y_pred)
+    y_class = y_pred.argmax(axis=-1)
+    
+    print (y_class)
     
 training_generator, validation_generator = generate_data()
 label_map = (validation_generator.class_indices)
@@ -221,3 +235,4 @@ evaluate_model_on_test_data(model,test_dir)
 loaded_model = load_model()
 evaluate_model_on_test_data(loaded_model,test_dir)
 plot_model(model,"models/keras/resnet.jpg")
+predict(model,'dampening.jpeg')

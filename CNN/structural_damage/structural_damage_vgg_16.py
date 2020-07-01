@@ -16,7 +16,8 @@ from keras.models import model_from_json
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg16 import preprocess_input
 from keras.utils.vis_utils import plot_model
-
+from keras.models import load_model
+from keras.preprocessing import image
 
 train_data_dir = 'dataset/train'
 validation_data_dir = 'dataset/val'
@@ -43,7 +44,7 @@ def create_model_decorated_with_vgg16():
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(256, activation='relu')(x) 
     x = layers.Dropout(0.5)(x)
-    outputLayer = layers.Dense(4, activation='softmax')(x)
+    outputLayer = layers.Dense(5, activation='softmax')(x)
     model = Model(conv_base.input, outputLayer)
 
     #use adam as an optimizer
@@ -51,7 +52,7 @@ def create_model_decorated_with_vgg16():
     #use sparse_categorical_crossentropy as objective function
     model.compile(loss='categorical_crossentropy',
               optimizer=optimizer,
-              metrics=['accuracy'])
+              metrics=['accuracy',ignore_accuracy_of_class(5)])
     
     return model
 
@@ -89,7 +90,7 @@ def evaluate_model(model, train_generator, validation_generator):
                               epochs=25,
                               validation_data=validation_generator,
                               validation_steps=nb_validation_samples,  # added in Kaggle
-                              workers=8
+                              workers=12
                              )
 
 
@@ -192,7 +193,7 @@ def visualize_filters(model):
             continue
         # get filter weights
 
-def load_model():
+def load_pretrained_model():
     # load json and create model
     json_file = open('models/keras/vgg16_model_architecture_v1.json', 'r')
     loaded_model_json = json_file.read()
@@ -213,7 +214,31 @@ def evaluate_predictions(true_labels, predicted_labels):
 
 def save_model(model,filePath):
         plot_model(model, to_file="vgg16.png", show_shapes=True, show_layer_names=True)
-    
+
+def predict(model):
+    img = image.load_img('1.jpg', target_size=(image_size, image_size))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+
+    images = np.vstack([x])
+    y_pred = model.predict(images, batch_size=10)
+    print(y_pred)
+    y_class = y_pred.argmax(axis=-1)
+    print(y_pred[0][2])
+    print (y_class)
+
+def ignore_accuracy_of_class(class_to_ignore=0):
+    def ignore_acc(y_true, y_pred):
+        y_true_class = keras.backend.argmax(y_true, axis=-1)
+        y_pred_class = keras.backend.argmax(y_pred, axis=-1)
+
+        ignore_mask = keras.backend.cast(keras.backend.not_equal(y_pred_class, class_to_ignore), 'int32')
+        matches = keras.backend.cast(keras.backend.equal(y_true_class, y_pred_class), 'int32') * ignore_mask
+        accuracy = keras.backend.sum(matches) / keras.backend.maximum(keras.backend.sum(ignore_mask), 1)
+        return accuracy
+
+    return ignore_acc
+ 
 training_generator, validation_generator = generate_data()
 label_map = (validation_generator.class_indices)
 model = create_model_decorated_with_vgg16()
@@ -222,8 +247,9 @@ summarize_diagnostics(history)
 create_value_to_label_map(training_generator.class_indices)
 #perform_validation(model)
 #visualize_filters(model)
-loaded_model = load_model()
+loaded_model = load_pretrained_model()
 true_labels, predicted_labels = predict_labels(loaded_model,test_dir)
 evaluate_predictions(true_labels, predicted_labels)
 save_model(loaded_model,"vgg16.jpg")
 output = model.predict("vgg16.png")
+predict(model)

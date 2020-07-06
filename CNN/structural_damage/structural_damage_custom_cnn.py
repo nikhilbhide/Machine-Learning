@@ -17,16 +17,17 @@ from keras.layers import Conv2D, Activation
 from keras.layers import MaxPooling2D
 from keras import backend as K
 from keras.utils.vis_utils import plot_model
-
+from keras.models import load_model
+from keras.preprocessing import image
 
 # dimensions of our images.
-img_width, img_height = 150, 150
+img_width, img_height = 224, 224
 train_data_dir = 'dataset/train'
 validation_data_dir = 'dataset/val'
 nb_train_samples = 80
 nb_validation_samples = 40
-epochs = 100
-batch_size = 8
+epochs = 50
+batch_size = 5
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -71,22 +72,22 @@ test_datagen = ImageDataGenerator(rescale=1. / 255)
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
     target_size=(img_width, img_height),
-    batch_size=batch_size,
+    batch_size=32,
     class_mode='categorical')
 
 validation_generator = test_datagen.flow_from_directory(
     validation_data_dir,
     target_size=(img_width, img_height),
-    batch_size=batch_size,
     class_mode='categorical')
 
 
 history = model.fit_generator(
     train_generator,
-    steps_per_epoch=nb_train_samples ,
-    epochs=epochs,
+    steps_per_epoch=nb_train_samples/5 ,
+    epochs=25,
     validation_data=validation_generator,
-    validation_steps=nb_validation_samples)
+    validation_steps=nb_validation_samples,
+    workers=8)
 
 
 # plot diagnostic learning curves
@@ -109,5 +110,18 @@ def summarize_diagnostics(history):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
+def predict(model, filepath):
+    img = image.load_img(filepath, target_size=(img_width, img_height))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+
+    images = np.vstack([x])
+    y_pred = model.predict(images, batch_size=10)
+    print(y_pred)
+    y_class = y_pred.argmax(axis=-1)
+    
+    print (y_class)
+    
 summarize_diagnostics(history)
 plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+predict(model,'dampening.jpeg')

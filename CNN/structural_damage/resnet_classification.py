@@ -43,13 +43,13 @@ def create_model_decorated_with_resnet():
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(256, activation='relu')(x) 
     x = layers.Dropout(0.5)(x)
-    outputLayer = layers.Dense(5, activation='softmax')(x)
+    outputLayer = layers.Dense(4, activation='softmax')(x)
     model = Model(conv_base.input, outputLayer)
 
     #use adam as an optimizer
     optimizer = keras.optimizers.Adam()
     #use sparse_categorical_crossentropy as objective function
-    model.compile(loss='sparse_categorical_crossentropy',
+    model.compile(loss='categorical_crossentropy',
               optimizer=optimizer,
               metrics=['accuracy'])
     

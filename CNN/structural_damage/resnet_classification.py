@@ -17,6 +17,7 @@ from sklearn.metrics import classification_report
 from keras.models import model_from_json
 from keras.models import load_model
 from keras.preprocessing import image
+from keras.utils.vis_utils import plot_model
 
 
 train_data_dir = 'dataset/train'
@@ -27,6 +28,7 @@ test_dir = 'dataset/test/'
 test_images_dir = 'dataset/test/'
 nb_train_samples = 80
 nb_validation_samples = 40
+value_to_class = {0:"collapse",1:"crack",2:"dampening",3:"termite"}
 
 #create model with decorated resnetwithout final dense layer
 #attach dense layer with 128 nodes and output layer with two nodes
@@ -208,7 +210,7 @@ def load_model():
     print("Loaded model from disk")
     return loaded_model
 
-def plot_model(model,filePath):
+def plot_neural_model(model,filePath):
     plot_model(model, to_file=filePath, show_shapes=True, show_layer_names=True)
 
 def predict(model, filepath):
@@ -220,19 +222,30 @@ def predict(model, filepath):
     y_pred = model.predict(images, batch_size=10)
     print(y_pred)
     y_class = y_pred.argmax(axis=-1)
-    
+    print(get_label(y_class[0]))
     print (y_class)
+
+def create_value_to_label_map(indices):
+    label_map = indices
+    for key in label_map:
+        value_to_class[label_map[key]] = key
     
-training_generator, validation_generator = generate_data()
-label_map = (validation_generator.class_indices)
-model = create_model_decorated_with_resnet()
-history = evaluate_model(model, training_generator, validation_generator)
-summarize_diagnostics(history)
-create_value_to_label_map(training_generator.class_indices)
-evaluate_model_on_test_data(model,test_dir)
+def get_label(label_value):
+    label = value_to_class[label_value]
+    return label
+
+# =============================================================================
+# training_generator, validation_generator = generate_data()
+# label_map = (validation_generator.class_indices)
+# model = create_model_decorated_with_resnet()
+# history = evaluate_model(model, training_generator, validation_generator)
+# summarize_diagnostics(history)
+# create_value_to_label_map(training_generator.class_indices)
+# evaluate_model_on_test_data(model,test_dir)
+# =============================================================================
 #perform_validation(model)
 #visualize_filters(model)
-loaded_model = load_model()
-evaluate_model_on_test_data(loaded_model,test_dir)
-plot_model(model,"models/keras/resnet.jpg")
-predict(model,'dampening.jpeg')
+model = load_model()
+evaluate_model_on_test_data(model,test_dir)
+#plot_neural_model(model,"models/keras/resnet.jpg")
+predict(model,'3.jpeg')

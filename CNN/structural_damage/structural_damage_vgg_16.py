@@ -22,7 +22,7 @@ from keras.preprocessing import image
 train_data_dir = 'dataset/train'
 validation_data_dir = 'dataset/val'
 image_size = 224
-value_to_class = {}
+value_to_class = {0:"collapse",1:"crack",2:"dampening",3:"termite"}
 test_dir = 'dataset/test/'
 test_images_dir = 'dataset/test/'
 nb_train_samples = 80
@@ -181,7 +181,6 @@ def create_value_to_label_map(indices):
     
 def get_label(label_value):
     label = value_to_class[label_value]
-    print(label)
     return label
             
 def visualize_filters(model):
@@ -216,7 +215,7 @@ def save_model(model,filePath):
         plot_model(model, to_file="vgg16.png", show_shapes=True, show_layer_names=True)
 
 def predict(model):
-    img = image.load_img('1.jpg', target_size=(image_size, image_size))
+    img = image.load_img('3.jpeg', target_size=(image_size, image_size))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
 
@@ -225,7 +224,7 @@ def predict(model):
     print(y_pred)
     y_class = y_pred.argmax(axis=-1)
     print(y_pred[0][2])
-    print (y_class)
+    print (get_label(y_class[0]))
 
 def ignore_accuracy_of_class(class_to_ignore=0):
     def ignore_acc(y_true, y_pred):
@@ -239,17 +238,18 @@ def ignore_accuracy_of_class(class_to_ignore=0):
 
     return ignore_acc
  
-training_generator, validation_generator = generate_data()
-label_map = (validation_generator.class_indices)
-model = create_model_decorated_with_vgg16()
-history = evaluate_model(model, training_generator, validation_generator)
-summarize_diagnostics(history)
-create_value_to_label_map(training_generator.class_indices)
+# =============================================================================
+# training_generator, validation_generator = generate_data()
+# label_map = (validation_generator.class_indices)
+# model = create_model_decorated_with_vgg16()
+# history = evaluate_model(model, training_generator, validation_generator)
+# summarize_diagnostics(history)
+# create_value_to_label_map(training_generator.class_indices)
+# =============================================================================
 #perform_validation(model)
 #visualize_filters(model)
 loaded_model = load_pretrained_model()
 true_labels, predicted_labels = predict_labels(loaded_model,test_dir)
 evaluate_predictions(true_labels, predicted_labels)
-save_model(loaded_model,"vgg16.jpg")
-output = model.predict("vgg16.png")
-predict(model)
+#save_model(loaded_model,"vgg16.jpg")
+predict(loaded_model)

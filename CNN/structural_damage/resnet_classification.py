@@ -37,23 +37,31 @@ def create_model_decorated_with_resnet():
     include_top=False,
     weights='imagenet')
 
+    # for layer in conv_base.layers:
+    #     #set layers as non trainable
+    #     layer.trainable = False
+    
+    # un-freeze the BatchNorm layers
     for layer in conv_base.layers:
-        #set layers as non trainable
-        layer.trainable = False
-        
+        if "BatchNormalization" in layer.__class__.__name__:
+            layer.trainable = True
+        else:
+            layer.trainable = False
+
     x = conv_base.output
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(256, activation='relu')(x) 
     x = layers.Dropout(0.5)(x)
     outputLayer = layers.Dense(4, activation='softmax')(x)
     model = Model(conv_base.input, outputLayer)
-
-    #use adam as an optimizer
-    optimizer = keras.optimizers.Adam()
-    #use sparse_categorical_crossentropy as objective function
-    model.compile(loss='categorical_crossentropy',
-              optimizer=optimizer,
-              metrics=['accuracy'])
+    
+    OBJECTIVE_FUNCTION = 'categorical_crossentropy'
+    # Common accuracy metric for all outputs, but can use different metrics for different output
+    LOSS_METRICS = ['accuracy']
+    
+    #use sgd as an optimizer
+    sgd = keras.optimizers.SGD(lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True)
+    model.compile(optimizer = sgd, loss = OBJECTIVE_FUNCTION, metrics = LOSS_METRICS)
     
     return model
 
@@ -86,12 +94,19 @@ def generate_data():
 #evaluate model by running it on train and validation generator
 #save model architecture and weights so that it could be used later on
 def evaluate_model(model, train_generator, validation_generator):
+    # Early stopping (stops training when validation doesn't improve for {patience} epochs)
+    es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30) 
+    model_filepath = 'models/model1.keras'
+    save_best = keras.callbacks.ModelCheckpoint(model_filepath, monitor='val_loss', save_best_only=True, mode='min')
+    # Saves the best version of the model to disk (as measured on the validation data set)
+    
     history = model.fit_generator(generator=train_generator,
                               steps_per_epoch=nb_train_samples // 5,  # added in Kaggle
-                              epochs=25,
+                              epochs=10,
                               validation_data=validation_generator,
                               validation_steps=nb_validation_samples,  # added in Kaggle
-                              workers=8
+                              workers=4,
+                              callbacks=[es, save_best]
                              )
 
 
@@ -234,18 +249,15 @@ def get_label(label_value):
     label = value_to_class[label_value]
     return label
 
-# =============================================================================
-# training_generator, validation_generator = generate_data()
-# label_map = (validation_generator.class_indices)
-# model = create_model_decorated_with_resnet()
-# history = evaluate_model(model, training_generator, validation_generator)
-# summarize_diagnostics(history)
-# create_value_to_label_map(training_generator.class_indices)
-# evaluate_model_on_test_data(model,test_dir)
-# =============================================================================
-#perform_validation(model)
-#visualize_filters(model)
-model = load_model()
+training_generator, validation_generator = generate_data()
+label_map = (validation_generator.class_indices)
+model = create_model_decorated_with_resnet()
+history = evaluate_model(model, training_generator, validation_generator)
+summarize_diagnostics(history)
+create_value_to_label_map(training_generator.class_indices)
 evaluate_model_on_test_data(model,test_dir)
-#plot_neural_model(model,"models/keras/resnet.jpg")
+visualize_filters(model)
+# model = load_model()
+# evaluate_model_on_test_data(model,test_dir)
+# #plot_neural_model(model,"models/keras/resnet.jpg")
 predict(model,'3.jpeg')
